@@ -3,10 +3,23 @@ OSM-Notes to CSV-File
 
 Release:
 - 1.0.0 - 2017/03/01 : Initial Release
+- 1.0.1 - 2017/03/01 : License modified
 
-Copyright:
-- Copyright (C) 2017 Klaus Tockloth
-- CC BY 4.0 (https://creativecommons.org/licenses/by/4.0)
+Copyright and license:
+- Copyright (c) 2017 Klaus Tockloth
+- MIT license
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation
+files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy,
+modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software
+is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR
+IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 Contact:
 - freizeitkarte@googlemail.com
@@ -63,11 +76,11 @@ type OSMNotes struct {
 // general
 var (
 	progName    = os.Args[0]
-	progVersion = "1.0.0"
+	progVersion = "1.0.1"
 	progDate    = "2017/03/01"
 	progAuthor  = "Klaus Tockloth"
-	progOwner   = "Copyright (C) 2017 Klaus Tockloth"
-	progLicense = "CC BY 4.0 (https://creativecommons.org/licenses/by/4.0)"
+	progOwner   = "Copyright (c) 2017 Klaus Tockloth"
+	progLicense = "MIT license"
 	progPurpose = "OSM-Notes -> CSV-File"
 	progInfo    = "Requests notes from OSM database and stores them into a CSV file."
 	progEmail   = "freizeitkarte@googlemail.com"
@@ -277,7 +290,14 @@ func showHelp() {
 	fmt.Printf("  A proxy server can be configured via the program environment:\n")
 	fmt.Printf("  Temporary: env HTTP_PROXY=http://proxy.server:port %s ...\n", progName)
 	fmt.Printf("  Permanent: export HTTP_PROXY=http://proxy.server:port\n")
-	fmt.Printf("  Permanent: export HTTP_PROXY=http://user:password@proxy.server:port\n\n")
+	fmt.Printf("  Permanent: export HTTP_PROXY=http://user:password@proxy.server:port\n")
+
+	fmt.Printf("\nDisclaimer:\n")
+	fmt.Printf("  THE SOFTWARE IS PROVIDED 'AS IS', WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED\n")
+	fmt.Printf("  TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL\n")
+	fmt.Printf("  THE AUTHORS OR COPYRIGHT HOLDERS BELIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,  WHETHER IN AN ACTION OF\n")
+	fmt.Printf("  CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN  CONNECTION  WITH THE  SOFTWARE OR THE  USE  OR OTHER\n")
+	fmt.Printf("  DEALINGS IN THE SOFTWARE.\n\n")
 
 	os.Exit(1)
 }
