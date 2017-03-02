@@ -25,4 +25,4 @@
       Permanent: export HTTP_PROXY=http://proxy.server:port
       Permanent: export HTTP_PROXY=http://user:password@proxy.server:port
 
-The prebuild binaries [(Linux, MacOS, Windows, ...)](https://github.com/Klaus-Tockloth/osmnotes2csv/releases/latest) have no dependencies. Just copy and run.
+The prebuild binaries for [(Linux, MacOS, Windows)](https://github.com/Klaus-Tockloth/osmnotes2csv/releases/latest) have no dependencies ... just download the utility and run it from the command line.
