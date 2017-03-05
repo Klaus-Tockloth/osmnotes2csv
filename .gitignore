@@ -1,3 +1,4 @@
 osmnotes2csv
 osmnotes.csv
 *.zip
+build/*
