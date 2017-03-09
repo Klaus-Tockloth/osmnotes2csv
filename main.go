@@ -1,33 +1,46 @@
-/* ----------------------------------------
-OSM-Notes to CSV-File
+/*
+Purpose:
+- OSM-Notes to CSV-File
 
-Release:
-- 1.0.0 - 2017/03/01 : Initial Release
-- 1.0.1 - 2017/03/01 : License modified
+Description:
+- This program requests notes from the OSM database and stores them into a CSV file.
+
+Releases:
+- 1.0.0 - 2017/03/01 : initial release
+- 1.0.1 - 2017/03/01 : license modified
+- 1.0.2 - 2017/03/09 : layout modified
+
+Author:
+- Klaus Tockloth
 
 Copyright and license:
 - Copyright (c) 2017 Klaus Tockloth
 - MIT license
 
-Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation
-files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy,
-modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software
-is furnished to do so, subject to the following conditions:
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software
+and associated documentation files (the Software), to deal in the Software without restriction,
+including without limitation the rights to use, copy, modify, merge, publish, distribute,
+sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
 
-The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+The above copyright notice and this permission notice shall be included in all copies or
+substantial portions of the Software.
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
-OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
-LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR
-IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+The software is provided 'as is', without warranty of any kind, express or implied, including
+but not limited to the warranties of merchantability, fitness for a particular purpose and
+noninfringement. In no event shall the authors or copyright holders be liable for any claim,
+damages or other liability, whether in an action of contract, tort or otherwise, arising from,
+out of or in connection with the software or the use or other dealings in the software.
 
 Contact:
 - freizeitkarte@googlemail.com
-- https://github.com/Klaus-Tockloth/osmnotes2csv
 
-API description:
-- http://wiki.openstreetmap.org/wiki/API_v0.6#Map_Notes_API
----------------------------------------- */
+Remarks:
+- API description: http://wiki.openstreetmap.org/wiki/API_v0.6#Map_Notes_API
+
+Links:
+- https://github.com/Klaus-Tockloth/osmnotes2csv
+*/
 
 package main
 
@@ -73,31 +86,32 @@ type OSMNotes struct {
 	} `json:"features"`
 }
 
-// general
+// general program info
 var (
 	progName    = os.Args[0]
-	progVersion = "1.0.1"
-	progDate    = "2017/03/01"
-	progAuthor  = "Klaus Tockloth"
+	progVersion = "1.0.2"
+	progDate    = "2017/03/09"
 	progOwner   = "Copyright (c) 2017 Klaus Tockloth"
 	progLicense = "MIT license"
 	progPurpose = "OSM-Notes -> CSV-File"
-	progInfo    = "Requests notes from OSM database and stores them into a CSV file."
-	progEmail   = "freizeitkarte@googlemail.com"
-	progURL     = "https://github.com/Klaus-Tockloth/osmnotes2csv"
+	progInfo    = "Requests notes from the OSM database and stores them into a CSV file."
+	progContact = "freizeitkarte@googlemail.com"
+	progLink    = "https://github.com/Klaus-Tockloth/osmnotes2csv"
 )
 
 // debugging
 var debug = false
 
-// command line
-var bbox = flag.String("bbox", "", "bounding box (left,bottom,right,top) (required)")
-var limit = flag.Int("limit", 999, "maximum number of notes")
-var closed = flag.Bool("closed", false, "include closed notes")
+// command line options
+var (
+	bbox   = flag.String("bbox", "", "bounding box (left,bottom,right,top) (required)")
+	limit  = flag.Int("limit", 999, "maximum number of notes")
+	closed = flag.Bool("closed", false, "include closed notes")
+)
 
-/* ----------------------------------------
-Program initialization
----------------------------------------- */
+/*
+Initialize program.
+*/
 func init() {
 
 	// init Logger
@@ -105,26 +119,24 @@ func init() {
 	log.SetFlags(log.Ldate | log.Ltime | log.Lmicroseconds | log.Lshortfile)
 }
 
-/* ----------------------------------------
-Program start
----------------------------------------- */
+/*
+Start program.
+*/
 func main() {
 
-	printInfo()
-
-	flag.Usage = showHelp
+	flag.Usage = printProgUsage
 	flag.Parse()
 
 	if *bbox == "" {
 		fmt.Printf("\nERROR:\n")
 		fmt.Printf("  Option -bbox required.\n")
-		showHelp()
+		printProgUsage()
 	}
 
 	if len(flag.Args()) < 1 {
 		fmt.Printf("\nERROR:\n")
 		fmt.Printf("  Output filename required.\n")
-		showHelp()
+		printProgUsage()
 	}
 
 	csvfile := flag.Arg(0)
@@ -268,13 +280,15 @@ func main() {
 	fmt.Printf("  DONE : %d notes, %d records\n\n", numNotes, numRecords)
 }
 
-/* ----------------------------------------
-Show help
----------------------------------------- */
-func showHelp() {
+/*
+Print program usage.
+*/
+func printProgUsage() {
+
+	printProgInfo()
 
 	fmt.Printf("\nUsage:\n")
-	fmt.Printf("  %s <-bbox=lon,lat,lon,lat> [-limit=n] [-closed] filename\n", progName)
+	fmt.Printf("  %s <-bbox=lon,lat,lon,lat> [-limit=n] [-closed] <filename>\n", progName)
 
 	fmt.Printf("\nExample:\n")
 	fmt.Printf("  %s -bbox=7.47,51.84,7.78,52.06 osmnotes.csv\n", progName)
@@ -282,40 +296,37 @@ func showHelp() {
 	fmt.Printf("\nOptions:\n")
 	flag.PrintDefaults()
 
-	fmt.Printf("\nArguments:\n")
+	fmt.Printf("\nArgument:\n")
 	fmt.Printf("  filename string\n")
 	fmt.Printf("        name of csv output file (required)\n")
 
 	fmt.Printf("\nRemarks:\n")
 	fmt.Printf("  A proxy server can be configured via the program environment:\n")
-	fmt.Printf("  Temporary: env HTTP_PROXY=http://proxy.server:port %s ...\n", progName)
-	fmt.Printf("  Permanent: export HTTP_PROXY=http://proxy.server:port\n")
-	fmt.Printf("  Permanent: export HTTP_PROXY=http://user:password@proxy.server:port\n")
+	fmt.Printf("  temporary: env HTTP_PROXY=http://proxy.server:port %s ...\n", progName)
+	fmt.Printf("  permanent: export HTTP_PROXY=http://user:password@proxy.server:port\n")
 
 	fmt.Printf("\nDisclaimer:\n")
-	fmt.Printf("  THE SOFTWARE IS PROVIDED 'AS IS', WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED\n")
-	fmt.Printf("  TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL\n")
-	fmt.Printf("  THE AUTHORS OR COPYRIGHT HOLDERS BELIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,  WHETHER IN AN ACTION OF\n")
-	fmt.Printf("  CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN  CONNECTION  WITH THE  SOFTWARE OR THE  USE  OR OTHER\n")
-	fmt.Printf("  DEALINGS IN THE SOFTWARE.\n\n")
+	fmt.Printf("  The software is provided 'as is', without warranty of any kind, express or implied, including\n" +
+		"  but not limited to the warranties of merchantability, fitness for a particular purpose and\n" +
+		"  noninfringement. In no event shall the authors or copyright holders be liable for any claim,\n" +
+		"  damages or other liability, whether in an action of contract, tort or otherwise, arising from,\n" +
+		"  out of or in connection with the software or the use or other dealings in the software.\n\n")
 
 	os.Exit(1)
 }
 
-/* ----------------------------------------
-Print info
----------------------------------------- */
-func printInfo() {
+/*
+Print program info.
+*/
+func printProgInfo() {
 
-	fmt.Printf("\nGeneral:\n")
-	fmt.Printf("  Program : %s\n", progName)
-	fmt.Printf("  Version : %s\n", progVersion)
-	fmt.Printf("  Date    : %s\n", progDate)
+	fmt.Printf("\nProgram:\n")
+	fmt.Printf("  Name    : %s\n", progName)
+	fmt.Printf("  Release : %s - %s\n", progVersion, progDate)
 	fmt.Printf("  Purpose : %s\n", progPurpose)
 	fmt.Printf("  Info    : %s\n", progInfo)
 	fmt.Printf("  Owner   : %s\n", progOwner)
 	fmt.Printf("  License : %s\n", progLicense)
-	fmt.Printf("  Author  : %s\n", progAuthor)
-	fmt.Printf("  eMail   : %s\n", progEmail)
-	fmt.Printf("  URL     : %s\n", progURL)
+	fmt.Printf("  Contact : %s\n", progContact)
+	fmt.Printf("  Link    : %s\n", progLink)
 }
