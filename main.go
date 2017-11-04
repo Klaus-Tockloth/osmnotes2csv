@@ -9,6 +9,7 @@ Releases:
 - 1.0.0 - 2017/03/01 : initial release
 - 1.0.1 - 2017/03/01 : license modified
 - 1.0.2 - 2017/03/09 : layout modified
+- 1.1.0 - 2017/11/03 : link to note added
 
 Author:
 - Klaus Tockloth
@@ -89,8 +90,8 @@ type OSMNotes struct {
 // general program info
 var (
 	progName    = os.Args[0]
-	progVersion = "1.0.2"
-	progDate    = "2017/03/09"
+	progVersion = "1.1.0"
+	progDate    = "2017/11/03"
 	progOwner   = "Copyright (c) 2017 Klaus Tockloth"
 	progLicense = "MIT license"
 	progPurpose = "OSM-Notes -> CSV-File"
@@ -238,10 +239,10 @@ func main() {
 	w := csv.NewWriter(file)
 
 	// CSV record buffer
-	record := make([]string, 7)
+	record := make([]string, 8)
 
 	// CSV header
-	header := []string{"Note", "Longitude", "Latitude", "Timestamp", "User", "Action", "Text"}
+	header := []string{"Note", "Longitude", "Latitude", "Timestamp", "User", "Action", "Link", "Text"}
 	if err := w.Write(header); err != nil {
 		log.Fatalf("error <%v> at w.Write()", err)
 	}
@@ -262,7 +263,9 @@ func main() {
 			}
 			record[4] = user
 			record[5] = comment.Action
-			record[6] = comment.Text
+			record[6] = fmt.Sprintf("https://www.openstreetmap.org/note/%v#map=18/%v/%v&layers=N",
+				feature.Properties.ID, feature.Geometry.Coordinates[1], feature.Geometry.Coordinates[0])
+			record[7] = comment.Text
 
 			// CSV record
 			if err := w.Write(record); err != nil {
