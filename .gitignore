@@ -1,4 +1,2 @@
-osmnotes2csv
-osmnotes.csv
-*.zip
+.DS_Store
 build/*

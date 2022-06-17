@@ -6,16 +6,17 @@ Description:
 - This program requests notes from the OSM database and stores them into a CSV file.
 
 Releases:
-- 1.0.0 - 2017/03/01 : initial release
-- 1.0.1 - 2017/03/01 : license modified
-- 1.0.2 - 2017/03/09 : layout modified
-- 1.1.0 - 2017/11/03 : link to note added
+- v1.0.0 - 2017/03/01 : initial release
+- v1.0.1 - 2017/03/01 : license modified
+- v1.0.2 - 2017/03/09 : layout modified
+- v1.1.0 - 2017/11/03 : link to note added
+- v1.2.0 - 2022/06/17 : modules, recompiled
 
 Author:
 - Klaus Tockloth
 
 Copyright and license:
-- Copyright (c) 2017 Klaus Tockloth
+- Copyright (c) 2017-2022 Klaus Tockloth
 - MIT license
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software
@@ -58,7 +59,7 @@ import (
 	"time"
 )
 
-// OSMNotes (generated with https://mholt.github.io/json-to-go/)
+// OSMNotes represents OSM notes structure
 type OSMNotes struct {
 	Type     string `json:"type"`
 	Features []struct {
@@ -90,9 +91,9 @@ type OSMNotes struct {
 // general program info
 var (
 	progName    = os.Args[0]
-	progVersion = "1.1.0"
-	progDate    = "2017/11/03"
-	progOwner   = "Copyright (c) 2017 Klaus Tockloth"
+	progVersion = "v1.2.0"
+	progDate    = "2022/06/17"
+	progOwner   = "Copyright (c) 2017-2022 Klaus Tockloth"
 	progLicense = "MIT license"
 	progPurpose = "OSM-Notes -> CSV-File"
 	progInfo    = "Requests notes from the OSM database and stores them into a CSV file."
@@ -111,20 +112,17 @@ var (
 )
 
 /*
-Initialize program.
+init initializes this program.
 */
 func init() {
-
-	// init Logger
 	log.SetPrefix("\nFATAL ERROR ")
 	log.SetFlags(log.Ldate | log.Ltime | log.Lmicroseconds | log.Lshortfile)
 }
 
 /*
-Start program.
+main starts this program.
 */
 func main() {
-
 	flag.Usage = printProgUsage
 	flag.Parse()
 
@@ -284,7 +282,7 @@ func main() {
 }
 
 /*
-Print program usage.
+printProgUsage prints program usage.
 */
 func printProgUsage() {
 
@@ -319,10 +317,9 @@ func printProgUsage() {
 }
 
 /*
-Print program info.
+printProgInfo prints program info.
 */
 func printProgInfo() {
-
 	fmt.Printf("\nProgram:\n")
 	fmt.Printf("  Name    : %s\n", progName)
 	fmt.Printf("  Release : %s - %s\n", progVersion, progDate)
