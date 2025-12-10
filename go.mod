@@ -1,3 +1,3 @@
 module github.com/osmnotes2csv
 
-go 1.18
+go 1.25

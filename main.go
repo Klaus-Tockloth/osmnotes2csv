@@ -1,9 +1,9 @@
 /*
 Purpose:
-- OSM-Notes to CSV-File
+- OSM Notes to CSV File
 
 Description:
-- This program requests notes from the OSM database and stores them into a CSV file.
+- This program requests notes from the OSM database and saves them to a CSV file.
 
 Releases:
 - v1.0.0 - 2017/03/01 : initial release
@@ -11,39 +11,17 @@ Releases:
 - v1.0.2 - 2017/03/09 : layout modified
 - v1.1.0 - 2017/11/03 : link to note added
 - v1.2.0 - 2022/06/17 : modules, recompiled
+- v1.3.0 - 2025/12/10 : program revised, go v1.25.5
 
 Author:
 - Klaus Tockloth
 
 Copyright and license:
-- Copyright (c) 2017-2022 Klaus Tockloth
+- Copyright (c) 2017-2025 Klaus Tockloth
 - MIT license
-
-Permission is hereby granted, free of charge, to any person obtaining a copy of this software
-and associated documentation files (the Software), to deal in the Software without restriction,
-including without limitation the rights to use, copy, modify, merge, publish, distribute,
-sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all copies or
-substantial portions of the Software.
-
-The software is provided 'as is', without warranty of any kind, express or implied, including
-but not limited to the warranties of merchantability, fitness for a particular purpose and
-noninfringement. In no event shall the authors or copyright holders be liable for any claim,
-damages or other liability, whether in an action of contract, tort or otherwise, arising from,
-out of or in connection with the software or the use or other dealings in the software.
-
-Contact:
-- freizeitkarte@googlemail.com
-
-Remarks:
-- API description: http://wiki.openstreetmap.org/wiki/API_v0.6#Map_Notes_API
-
-Links:
-- https://github.com/Klaus-Tockloth/osmnotes2csv
 */
 
+// main package
 package main
 
 import (
@@ -51,10 +29,9 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"net/http"
-	"net/http/httputil"
+	"net/url"
 	"os"
 	"time"
 )
@@ -91,18 +68,11 @@ type OSMNotes struct {
 // general program info
 var (
 	progName    = os.Args[0]
-	progVersion = "v1.2.0"
-	progDate    = "2022/06/17"
-	progOwner   = "Copyright (c) 2017-2022 Klaus Tockloth"
-	progLicense = "MIT license"
-	progPurpose = "OSM-Notes -> CSV-File"
-	progInfo    = "Requests notes from the OSM database and stores them into a CSV file."
-	progContact = "freizeitkarte@googlemail.com"
-	progLink    = "https://github.com/Klaus-Tockloth/osmnotes2csv"
+	progVersion = "v1.3.0"
+	progDate    = "2025/12/10"
+	progPurpose = "OSM Notes to CSV File"
+	progInfo    = "Requests notes from the OSM database and saves them to a CSV file."
 )
-
-// debugging
-var debug = false
 
 // command line options
 var (
@@ -112,162 +82,117 @@ var (
 )
 
 /*
-init initializes this program.
-*/
-func init() {
-	log.SetPrefix("\nFATAL ERROR ")
-	log.SetFlags(log.Ldate | log.Ltime | log.Lmicroseconds | log.Lshortfile)
-}
-
-/*
 main starts this program.
 */
 func main() {
+	log.SetFlags(log.Ldate | log.Ltime | log.Lmicroseconds | log.Lshortfile)
 	flag.Usage = printProgUsage
 	flag.Parse()
 
 	if *bbox == "" {
-		fmt.Printf("\nERROR:\n")
-		fmt.Printf("  Option -bbox required.\n")
+		fmt.Fprintf(os.Stderr, "\nERROR: Option -bbox required.\n")
 		printProgUsage()
 	}
 
 	if len(flag.Args()) < 1 {
-		fmt.Printf("\nERROR:\n")
-		fmt.Printf("  Output filename required.\n")
+		fmt.Fprintf(os.Stderr, "\nERROR: Output filename required.\n")
 		printProgUsage()
 	}
 
 	csvfile := flag.Arg(0)
 
-	includeClosed := 0
-	if *closed {
-		includeClosed = 1
+	osmBaseURI := "https://api.openstreetmap.org/api/0.6/notes.json"
+	u, err := url.Parse(osmBaseURI)
+	if err != nil {
+		log.Fatal(err)
 	}
-
-	osmBaseURI := "http://api.openstreetmap.org/api/0.6/notes.json"
-	osmRequestURI := fmt.Sprintf("%s?bbox=%s&limit=%d&closed=%d", osmBaseURI, *bbox, *limit, includeClosed)
+	q := u.Query()
+	q.Set("bbox", *bbox)
+	q.Set("limit", fmt.Sprintf("%d", *limit))
+	if *closed {
+		q.Set("closed", "1")
+	} else {
+		q.Set("closed", "0")
+	}
+	u.RawQuery = q.Encode()
 
 	fmt.Printf("\nRequesting OSM notes ...\n")
-	fmt.Printf("  URI  : %s\n", osmRequestURI)
+	fmt.Printf("  URI  : %s\n", u.String())
 
 	var netClient = &http.Client{
 		Timeout: time.Second * 180,
 	}
 
-	resp, err := netClient.Get(osmRequestURI)
+	// HTTP Request
+	req, err := http.NewRequest("GET", u.String(), nil)
 	if err != nil {
-		log.Fatalf("error <%v> at netClient.Get()", err)
+		log.Fatalf("error creating request: %v", err)
 	}
+	req.Header.Set("User-Agent", fmt.Sprintf("%s/%s (%s)", progName, progVersion, "freizeitkarte@googlemail.com"))
 
-	if resp.Status != "200 OK" {
-		log.Fatalf("http status <%v> not expected", resp.Status)
-	}
-
-	if debug {
-		dumpBody := true
-		var dump []byte
-		dump, err = httputil.DumpResponse(resp, dumpBody)
-		if err != nil {
-			log.Fatalf("error <%v> at httputil.DumpResponse()", err)
-		}
-		fmt.Printf("\nResponse dump (body = %v) ...\n%s\n", dumpBody, dump)
-	}
-
-	rb, err := ioutil.ReadAll(resp.Body)
-	resp.Body.Close()
+	resp, err := netClient.Do(req)
 	if err != nil {
-		log.Fatalf("error <%v> at ioutil.ReadAll()", err)
+		log.Fatalf("error executing request: %v", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		log.Fatalf("unexpected http status <%v>", resp.Status)
 	}
 
 	fmt.Printf("\nWriting CSV file ...\n")
 	fmt.Printf("  FILE : %s\n", csvfile)
 
 	var notes OSMNotes
-	if err = json.Unmarshal(rb, &notes); err != nil {
-		log.Fatalf("error <%v> at json.Unmarshal()", err)
+	if err := json.NewDecoder(resp.Body).Decode(&notes); err != nil {
+		log.Fatalf("error decoding JSON: %v", err)
 	}
 
 	if notes.Type != "FeatureCollection" {
 		log.Fatalf("notes type <%v> unexpected", notes.Type)
 	}
 
-	if debug {
-		for _, feature := range notes.Features {
-			fmt.Printf("----------------------------------------\n\n")
-			fmt.Printf("feature.Type                   = %v\n", feature.Type)
-			fmt.Printf("feature.Geometry.Type          = %v\n", feature.Geometry.Type)
-			fmt.Printf("feature.Geometry.Coordinates   = %v\n", feature.Geometry.Coordinates)
-			fmt.Printf("feature.Properties.ID          = %v\n", feature.Properties.ID)
-			fmt.Printf("feature.Properties.URL         = %v\n", feature.Properties.URL)
-			fmt.Printf("feature.Properties.CommentURL  = %v\n", feature.Properties.CommentURL)
-			fmt.Printf("feature.Properties.CloseURL    = %v\n", feature.Properties.CloseURL)
-			fmt.Printf("feature.Properties.DateCreated = %v\n", feature.Properties.DateCreated)
-			fmt.Printf("feature.Properties.Status      = %v\n", feature.Properties.Status)
-			fmt.Printf("\n")
-			for _, comment := range feature.Properties.Comments {
-				fmt.Printf("  comment.Date    = %v\n", comment.Date)
-				fmt.Printf("  comment.UID     = %v\n", comment.UID)
-				fmt.Printf("  comment.User    = %v\n", comment.User)
-				fmt.Printf("  comment.UserURL = %v\n", comment.UserURL)
-				fmt.Printf("  comment.Action  = %v\n", comment.Action)
-				fmt.Printf("  comment.Text    = %v\n", comment.Text)
-				fmt.Printf("  comment.HTML    = %v\n", comment.HTML)
-				fmt.Printf("\n")
-			}
-		}
-	}
-
-	// O_WRONLY = open the file write-only
-	// O_TRUNC = if possible, truncate file when opened
-	// Modus = O_CREATE = create a new file if none exists
-	// 0666 = read & write
-	file, err := os.OpenFile(csvfile, os.O_WRONLY|os.O_TRUNC|os.O_CREATE, 0666)
+	file, err := os.OpenFile(csvfile, os.O_WRONLY|os.O_TRUNC|os.O_CREATE, 0600)
 	if err != nil {
-		log.Fatalf("error <%v> at os.OpenFile(); file = <%v>", err, csvfile)
+		log.Fatalf("error opening file <%s>: %v", csvfile, err)
 	}
+	defer file.Close()
 
-	defer func() {
-		if err := file.Close(); err != nil {
-			log.Fatalf("error <%v> at file.Close(); file = <%v>", err, csvfile)
-		}
-	}()
-
-	// CSV writer
 	w := csv.NewWriter(file)
-
-	// CSV record buffer
-	record := make([]string, 8)
-
-	// CSV header
 	header := []string{"Note", "Longitude", "Latitude", "Timestamp", "User", "Action", "Link", "Text"}
 	if err := w.Write(header); err != nil {
-		log.Fatalf("error <%v> at w.Write()", err)
+		log.Fatalf("error writing header: %v", err)
 	}
 
 	numRecords := 0
 	numNotes := 0
+
 	for _, feature := range notes.Features {
-		record[0] = fmt.Sprintf("%v", feature.Properties.ID)
-		record[1] = fmt.Sprintf("%v", feature.Geometry.Coordinates[0])
-		record[2] = fmt.Sprintf("%v", feature.Geometry.Coordinates[1])
 		numNotes++
+		lon := fmt.Sprintf("%.7f", feature.Geometry.Coordinates[0])
+		lat := fmt.Sprintf("%.7f", feature.Geometry.Coordinates[1])
+		noteID := fmt.Sprintf("%d", feature.Properties.ID)
+		link := fmt.Sprintf("https://www.openstreetmap.org/note/%s#map=18/%s/%s&layers=N", noteID, lat, lon)
 
 		for _, comment := range feature.Properties.Comments {
-			record[3] = comment.Date
 			user := comment.User
 			if user == "" {
-				user = "anonym"
+				user = "anonymous"
 			}
-			record[4] = user
-			record[5] = comment.Action
-			record[6] = fmt.Sprintf("https://www.openstreetmap.org/note/%v#map=18/%v/%v&layers=N",
-				feature.Properties.ID, feature.Geometry.Coordinates[1], feature.Geometry.Coordinates[0])
-			record[7] = comment.Text
 
-			// CSV record
+			record := []string{
+				noteID,
+				lon,
+				lat,
+				comment.Date,
+				user,
+				comment.Action,
+				link,
+				comment.Text,
+			}
+
 			if err := w.Write(record); err != nil {
-				log.Fatalf("error <%v> at w.Write()", err)
+				log.Fatalf("error writing record: %v", err)
 			}
 			numRecords++
 		}
@@ -275,7 +200,7 @@ func main() {
 
 	w.Flush()
 	if err := w.Error(); err != nil {
-		log.Fatalf("error <%v> at w.Flush()", err)
+		log.Fatalf("error flushing CSV: %v", err)
 	}
 
 	fmt.Printf("  DONE : %d notes, %d records\n\n", numNotes, numRecords)
@@ -302,7 +227,7 @@ func printProgUsage() {
 	fmt.Printf("        name of csv output file (required)\n")
 
 	fmt.Printf("\nRemarks:\n")
-	fmt.Printf("  A proxy server can be configured via the program environment:\n")
+	fmt.Printf("  A proxy server can be configured via environment variables:\n")
 	fmt.Printf("  temporary: env HTTP_PROXY=http://proxy.server:port %s ...\n", progName)
 	fmt.Printf("  permanent: export HTTP_PROXY=http://user:password@proxy.server:port\n")
 
@@ -325,8 +250,4 @@ func printProgInfo() {
 	fmt.Printf("  Release : %s - %s\n", progVersion, progDate)
 	fmt.Printf("  Purpose : %s\n", progPurpose)
 	fmt.Printf("  Info    : %s\n", progInfo)
-	fmt.Printf("  Owner   : %s\n", progOwner)
-	fmt.Printf("  License : %s\n", progLicense)
-	fmt.Printf("  Contact : %s\n", progContact)
-	fmt.Printf("  Link    : %s\n", progLink)
 }
